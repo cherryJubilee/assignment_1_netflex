@@ -2,10 +2,18 @@ import React, { useState } from "react";
 import styles from "./MyPage.module.scss";
 import { useProfile } from "../../../contexts/profile.context";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../../contexts/auth.context";
 
 function MyPage() {
-  const { nickname, setNickname, likedMovies } = useProfile(); // likedMovies: 좋아요 영화목록
+  const {
+    nickname,
+    setNickname,
+    likedMovies,
+    addLikedMovie,
+    removeLikedMovie,
+  } = useProfile(); // likedMovies: 좋아요 영화목록
   const [newNickname, setNewNickname] = useState(nickname);
+  const { isLoggedIn } = useAuth();
 
   const handleNicknameChange = (event) => {
     setNewNickname(event.target.value);
@@ -14,6 +22,20 @@ function MyPage() {
   const handleNicknameSave = () => {
     setNickname(newNickname);
     return alert("닉네임이 설정 되었습니다");
+  };
+
+  // 좋아요 상태 확인 함수
+  const isLiked = (movieId) => {
+    return likedMovies.some((movie) => movie.id === movieId);
+  };
+
+  const handleLike = (event, currentMovie) => {
+    event.stopPropagation(); // 링크 이동 방지
+    if (isLiked(currentMovie.id)) {
+      removeLikedMovie(currentMovie.id); // 이미 좋아요 된 영화 -> 목록에서 제거
+    } else {
+      addLikedMovie(currentMovie); // 좋아요 된 영화가 아니라면 -> 목록에 추가
+    }
   };
 
   return (
@@ -47,6 +69,16 @@ function MyPage() {
                 />
                 <h4>{movie.title}</h4>
               </Link>
+              {isLoggedIn && (
+                <button
+                  className={styles.movieLikeBtn}
+                  onClick={(e) => handleLike(e, movie)} // 이벤트와 현재 영화 객체 전달
+                >
+                  <span className={styles.heartIcon}>
+                    {isLiked(movie.id) ? "❤️" : "🤍"}
+                  </span>
+                </button>
+              )}
             </li>
           ))}
         </ul>
